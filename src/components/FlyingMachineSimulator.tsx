@@ -61,6 +61,13 @@ export function FlyingMachineSimulator() {
         }
     };
 
+    // 向きを持たないブロックタイプを定義
+    const noDirectionBlocks = [
+        BlockType.Redstone,
+        BlockType.SlimeBlock,
+        BlockType.HoneycombBlock
+    ];
+
     const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
         if (!containerRef.current || !state.selectedBlock) return;
 
@@ -85,8 +92,8 @@ export function FlyingMachineSimulator() {
             if (existingBlockIndex !== -1) {
                 const existingBlock = prev.blocks[existingBlockIndex];
 
-                // 同じタイプのブロックの場合は向きを変更
-                if (existingBlock.type === state.selectedBlock) {
+                // 同じタイプのブロックの場合で、向きを持つブロックの場合のみ向きを変更
+                if (existingBlock.type === state.selectedBlock && !noDirectionBlocks.includes(state.selectedBlock)) {
                     const newBlocks = [...prev.blocks];
                     newBlocks[existingBlockIndex] = {
                         ...baseBlock,
@@ -98,7 +105,7 @@ export function FlyingMachineSimulator() {
                     };
                 }
 
-                // 異なるタイプの場合は新しいブロックで置き換え
+                // それ以外の場合は新しいブロックで置き換え
                 const newBlocks = [...prev.blocks];
                 newBlocks[existingBlockIndex] = {
                     ...baseBlock,

@@ -140,10 +140,19 @@ export class Renderer2D implements IMachineRenderer {
             this.ctx.strokeRect(x, y, this.gridSize, this.gridSize);
         }
 
-        // 向きを示す矢印を描画
-        this.ctx.globalAlpha = 0.7;
-        this.drawDirectionArrow(x, y, direction);
-        this.ctx.globalAlpha = 1.0;
+        // 向きのないブロックタイプを定義
+        const noDirectionBlocks = [
+            BlockType.Redstone,
+            BlockType.SlimeBlock,
+            BlockType.HoneycombBlock
+        ];
+
+        // 向きのあるブロックの場合のみ矢印を描画
+        if (!noDirectionBlocks.includes(type)) {
+            this.ctx.globalAlpha = 0.7;
+            this.drawDirectionArrow(x, y, direction);
+            this.ctx.globalAlpha = 1.0;
+        }
     }
 
     private drawDirectionArrow(x: number, y: number, direction: Direction): void {
