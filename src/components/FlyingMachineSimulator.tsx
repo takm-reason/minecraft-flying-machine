@@ -6,11 +6,11 @@ import './FlyingMachineSimulator.css';
 const BLOCK_LABELS: Record<BlockType, string> = {
     [BlockType.StickyPiston]: '粘着ピストン',
     [BlockType.Piston]: 'ピストン',
-    [BlockType.Redstone]: 'レッドストーン',
     [BlockType.Observer]: 'オブザーバー',
+    [BlockType.Dispenser]: 'ディスペンサー',
     [BlockType.SlimeBlock]: 'スライムブロック',
     [BlockType.HoneycombBlock]: 'ハニカムブロック',
-    [BlockType.Dispenser]: 'ディスペンサー',
+    [BlockType.Redstone]: 'レッドストーン',
     [BlockType.Empty]: '空気'
 };
 
