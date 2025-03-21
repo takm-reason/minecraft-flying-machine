@@ -4,21 +4,57 @@ export class Renderer2D implements IMachineRenderer {
     private canvas: HTMLCanvasElement | null = null;
     private ctx: CanvasRenderingContext2D | null = null;
     private gridSize = 40; // ピクセル単位のグリッドサイズ
-    private colors = {
-        [BlockType.StickyPiston]: '#43a047',
-        [BlockType.Piston]: '#795548',
-        [BlockType.Redstone]: '#f44336',
-        [BlockType.Observer]: '#607d8b',
-        [BlockType.SlimeBlock]: '#81c784',
-        [BlockType.Empty]: '#ffffff'
+    private textures: Map<BlockType, HTMLImageElement> = new Map();
+    private textureLoadPromises: Promise<void>[] = [];
+
+    // テクスチャのパスを定義
+    private textureUrls = {
+        [BlockType.StickyPiston]: '/textures/piston_side.png',                  // ピストンの側面テクスチャ
+        [BlockType.Piston]: '/textures/piston_side.png',                        // ピストンの側面テクスチャ
+        [BlockType.Redstone]: '/textures/redstone_block.png',
+        [BlockType.Observer]: '/textures/observer_top.png',                     // オブザーバーの上面テクスチャ
+        [BlockType.SlimeBlock]: '/textures/slime.png',
+        [BlockType.HoneycombBlock]: '/textures/honeycomb.png',
+        [BlockType.Dispenser]: '/textures/dispenser_front_horizontal.png',     // ディスペンサーの前面テクスチャ
     };
 
-    initialize(container: HTMLElement): void {
+    private async loadTexture(type: BlockType, url: string): Promise<void> {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+                this.textures.set(type, img);
+                resolve();
+            };
+            img.onerror = () => reject(new Error(`Failed to load texture: ${url}`));
+            img.src = url;
+        });
+    }
+
+    private async loadAllTextures(): Promise<void> {
+        this.textureLoadPromises = Object.entries(this.textureUrls).map(([type, url]) =>
+            this.loadTexture(type as BlockType, url)
+        );
+
+        try {
+            await Promise.all(this.textureLoadPromises);
+            // テクスチャがロードされたら再描画
+            if (this.canvas) {
+                this.drawGrid();
+            }
+        } catch (error) {
+            console.error('Failed to load textures:', error);
+        }
+    }
+
+    async initialize(container: HTMLElement): Promise<void> {
         this.canvas = document.createElement('canvas');
         this.canvas.width = container.clientWidth;
         this.canvas.height = container.clientHeight;
         this.ctx = this.canvas.getContext('2d');
         container.appendChild(this.canvas);
+
+        // テクスチャをロード
+        await this.loadAllTextures();
         this.drawGrid();
     }
 
@@ -64,17 +100,50 @@ export class Renderer2D implements IMachineRenderer {
         const x = position.x * this.gridSize;
         const y = position.y * this.gridSize;
 
-        // ブロックの背景を描画
-        this.ctx.fillStyle = this.colors[type];
-        this.ctx.fillRect(x, y, this.gridSize, this.gridSize);
+        // テクスチャがある場合は描画
+        const texture = this.textures.get(type);
+        if (texture) {
+            // 方向に応じて回転を適用
+            this.ctx.save();
+            this.ctx.translate(x + this.gridSize / 2, y + this.gridSize / 2);
 
-        // ブロックの枠線を描画
-        this.ctx.strokeStyle = '#000000';
-        this.ctx.lineWidth = 2;
-        this.ctx.strokeRect(x, y, this.gridSize, this.gridSize);
+            switch (direction) {
+                case Direction.North:
+                    break; // デフォルトの向き
+                case Direction.South:
+                    this.ctx.rotate(Math.PI);
+                    break;
+                case Direction.East:
+                    this.ctx.rotate(Math.PI / 2);
+                    break;
+                case Direction.West:
+                    this.ctx.rotate(-Math.PI / 2);
+                    break;
+            }
+
+            // テクスチャを描画
+            this.ctx.drawImage(
+                texture,
+                -this.gridSize / 2,
+                -this.gridSize / 2,
+                this.gridSize,
+                this.gridSize
+            );
+
+            this.ctx.restore();
+        } else {
+            // テクスチャがない場合は単色で描画
+            this.ctx.fillStyle = '#ffffff';
+            this.ctx.fillRect(x, y, this.gridSize, this.gridSize);
+            this.ctx.strokeStyle = '#000000';
+            this.ctx.lineWidth = 2;
+            this.ctx.strokeRect(x, y, this.gridSize, this.gridSize);
+        }
 
         // 向きを示す矢印を描画
+        this.ctx.globalAlpha = 0.7;
         this.drawDirectionArrow(x, y, direction);
+        this.ctx.globalAlpha = 1.0;
     }
 
     private drawDirectionArrow(x: number, y: number, direction: Direction): void {
@@ -142,5 +211,6 @@ export class Renderer2D implements IMachineRenderer {
         }
         this.canvas = null;
         this.ctx = null;
+        this.textures.clear();
     }
 }

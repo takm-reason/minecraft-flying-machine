@@ -9,6 +9,8 @@ const BLOCK_LABELS: Record<BlockType, string> = {
     [BlockType.Redstone]: 'レッドストーン',
     [BlockType.Observer]: 'オブザーバー',
     [BlockType.SlimeBlock]: 'スライムブロック',
+    [BlockType.HoneycombBlock]: 'ハニカムブロック',
+    [BlockType.Dispenser]: 'ディスペンサー',
     [BlockType.Empty]: '空気'
 };
 

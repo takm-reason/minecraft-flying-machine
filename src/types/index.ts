@@ -10,6 +10,8 @@ export enum BlockType {
     Redstone = 'REDSTONE',
     Observer = 'OBSERVER',
     SlimeBlock = 'SLIME_BLOCK',
+    HoneycombBlock = 'HONEYCOMB_BLOCK',
+    Dispenser = 'DISPENSER',
     Empty = 'EMPTY'
 }
 
