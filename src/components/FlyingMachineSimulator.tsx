@@ -55,6 +55,10 @@ export function FlyingMachineSimulator() {
             case Direction.South:
                 return Direction.West;
             case Direction.West:
+                return Direction.Up;
+            case Direction.Up:
+                return Direction.Down;
+            case Direction.Down:
                 return Direction.North;
             default:
                 return Direction.North;

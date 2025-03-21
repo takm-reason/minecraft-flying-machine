@@ -107,6 +107,7 @@ export class Renderer2D implements IMachineRenderer {
             this.ctx.save();
             this.ctx.translate(x + this.gridSize / 2, y + this.gridSize / 2);
 
+            // スケールと回転を適用して3D的な表現を実現
             switch (direction) {
                 case Direction.North:
                     break; // デフォルトの向き
@@ -118,6 +119,15 @@ export class Renderer2D implements IMachineRenderer {
                     break;
                 case Direction.West:
                     this.ctx.rotate(-Math.PI / 2);
+                    break;
+                case Direction.Up:
+                    // 上向きの場合は少し縮小して上向きに見えるように
+                    this.ctx.scale(0.8, 0.8);
+                    break;
+                case Direction.Down:
+                    // 下向きの場合は少し縮小して下向きに見えるように
+                    this.ctx.scale(0.8, 0.8);
+                    this.ctx.rotate(Math.PI);
                     break;
             }
 
@@ -171,6 +181,9 @@ export class Renderer2D implements IMachineRenderer {
         let endX = center.x;
         let endY = center.y;
 
+        // 上下方向の矢印は少し短くして区別をつける
+        const upDownArrowLength = arrowLength * 0.6;
+
         switch (direction) {
             case Direction.North:
                 endY = center.y - arrowLength;
@@ -184,6 +197,25 @@ export class Renderer2D implements IMachineRenderer {
             case Direction.West:
                 endX = center.x - arrowLength;
                 break;
+            case Direction.Up:
+                // 上向きの矢印は円の中に点を追加
+                this.ctx.beginPath();
+                this.ctx.arc(center.x, center.y, upDownArrowLength / 2, 0, Math.PI * 2);
+                this.ctx.stroke();
+                this.ctx.beginPath();
+                this.ctx.arc(center.x, center.y, 2, 0, Math.PI * 2);
+                this.ctx.fill();
+                return;
+            case Direction.Down:
+                // 下向きの矢印は×印を描画
+                const crossSize = upDownArrowLength / 2;
+                this.ctx.beginPath();
+                this.ctx.moveTo(center.x - crossSize, center.y - crossSize);
+                this.ctx.lineTo(center.x + crossSize, center.y + crossSize);
+                this.ctx.moveTo(center.x + crossSize, center.y - crossSize);
+                this.ctx.lineTo(center.x - crossSize, center.y + crossSize);
+                this.ctx.stroke();
+                return;
         }
 
         // 矢印の線を描画
