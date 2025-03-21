@@ -4,25 +4,34 @@ export class Renderer2D implements IMachineRenderer {
     private canvas: HTMLCanvasElement | null = null;
     private ctx: CanvasRenderingContext2D | null = null;
     private gridSize = 40; // ピクセル単位のグリッドサイズ
-    private textures: Map<BlockType, HTMLImageElement> = new Map();
-    private textureLoadPromises: Promise<void>[] = [];
+    private textures: Map<string, HTMLImageElement> = new Map();
 
-    // テクスチャのパスを定義
-    private textureUrls = {
-        [BlockType.StickyPiston]: '/textures/piston_side.png',                  // ピストンの側面テクスチャ
-        [BlockType.Piston]: '/textures/piston_side.png',                        // ピストンの側面テクスチャ
-        [BlockType.Redstone]: '/textures/redstone_block.png',
-        [BlockType.Observer]: '/textures/observer_top.png',                     // オブザーバーの上面テクスチャ
-        [BlockType.SlimeBlock]: '/textures/slime.png',
-        [BlockType.HoneycombBlock]: '/textures/honeycomb.png',
-        [BlockType.Dispenser]: '/textures/dispenser_front_horizontal.png',     // ディスペンサーの前面テクスチャ
+    // ピストンの向きに応じたテクスチャを管理
+    private pistonTextures = {
+        side: {
+            [BlockType.StickyPiston]: '/textures/piston_side.png',
+            [BlockType.Piston]: '/textures/piston_side.png',
+        },
+        top: {
+            [BlockType.StickyPiston]: '/textures/piston_top_sticky.png',
+            [BlockType.Piston]: '/textures/piston_top_normal.png',
+        }
     };
 
-    private async loadTexture(type: BlockType, url: string): Promise<void> {
+    // 基本テクスチャ
+    private textureUrls = {
+        [BlockType.Redstone]: '/textures/redstone_block.png',
+        [BlockType.Observer]: '/textures/observer_top.png',
+        [BlockType.SlimeBlock]: '/textures/slime.png',
+        [BlockType.HoneycombBlock]: '/textures/honeycomb.png',
+        [BlockType.Dispenser]: '/textures/dispenser_front_horizontal.png',
+    };
+
+    private async loadTexture(key: string, url: string): Promise<void> {
         return new Promise((resolve, reject) => {
             const img = new Image();
             img.onload = () => {
-                this.textures.set(type, img);
+                this.textures.set(key, img);
                 resolve();
             };
             img.onerror = () => reject(new Error(`Failed to load texture: ${url}`));
@@ -31,13 +40,25 @@ export class Renderer2D implements IMachineRenderer {
     }
 
     private async loadAllTextures(): Promise<void> {
-        this.textureLoadPromises = Object.entries(this.textureUrls).map(([type, url]) =>
-            this.loadTexture(type as BlockType, url)
-        );
+        const promises: Promise<void>[] = [];
+
+        // 基本テクスチャのロード
+        Object.entries(this.textureUrls).forEach(([type, url]) => {
+            promises.push(this.loadTexture(type, url));
+        });
+
+        // ピストンの側面テクスチャをロード
+        Object.entries(this.pistonTextures.side).forEach(([type, url]) => {
+            promises.push(this.loadTexture(`${type}_side`, url));
+        });
+
+        // ピストンの前面テクスチャをロード
+        Object.entries(this.pistonTextures.top).forEach(([type, url]) => {
+            promises.push(this.loadTexture(`${type}_top`, url));
+        });
 
         try {
-            await Promise.all(this.textureLoadPromises);
-            // テクスチャがロードされたら再描画
+            await Promise.all(promises);
             if (this.canvas) {
                 this.drawGrid();
             }
@@ -53,7 +74,6 @@ export class Renderer2D implements IMachineRenderer {
         this.ctx = this.canvas.getContext('2d');
         container.appendChild(this.canvas);
 
-        // テクスチャをロード
         await this.loadAllTextures();
         this.drawGrid();
     }
@@ -100,14 +120,24 @@ export class Renderer2D implements IMachineRenderer {
         const x = position.x * this.gridSize;
         const y = position.y * this.gridSize;
 
-        // テクスチャがある場合は描画
-        const texture = this.textures.get(type);
+        // テクスチャの選択
+        let textureKey: string = type;
+        if (type === BlockType.StickyPiston || type === BlockType.Piston) {
+            // Upの場合は前面（上面）のテクスチャを使用
+            if (direction === Direction.Up) {
+                textureKey = `${type}_top` as string;
+            } else {
+                textureKey = `${type}_side` as string;
+            }
+        }
+
+        const texture = this.textures.get(textureKey.toString());
         if (texture) {
             // 方向に応じて回転を適用
             this.ctx.save();
             this.ctx.translate(x + this.gridSize / 2, y + this.gridSize / 2);
 
-            // スケールと回転を適用して3D的な表現を実現
+            // 方向に応じた回転を適用
             switch (direction) {
                 case Direction.North:
                     break; // デフォルトの向き
@@ -121,12 +151,8 @@ export class Renderer2D implements IMachineRenderer {
                     this.ctx.rotate(-Math.PI / 2);
                     break;
                 case Direction.Up:
-                    // 上向きの場合は少し縮小して上向きに見えるように
-                    this.ctx.scale(0.8, 0.8);
-                    break;
+                    break; // 上向きはそのまま
                 case Direction.Down:
-                    // 下向きの場合は少し縮小して下向きに見えるように
-                    this.ctx.scale(0.8, 0.8);
                     this.ctx.rotate(Math.PI);
                     break;
             }
@@ -141,13 +167,6 @@ export class Renderer2D implements IMachineRenderer {
             );
 
             this.ctx.restore();
-        } else {
-            // テクスチャがない場合は単色で描画
-            this.ctx.fillStyle = '#ffffff';
-            this.ctx.fillRect(x, y, this.gridSize, this.gridSize);
-            this.ctx.strokeStyle = '#000000';
-            this.ctx.lineWidth = 2;
-            this.ctx.strokeRect(x, y, this.gridSize, this.gridSize);
         }
 
         // 向きのないブロックタイプを定義
@@ -173,6 +192,7 @@ export class Renderer2D implements IMachineRenderer {
             y: y + this.gridSize / 2
         };
         const arrowLength = this.gridSize * 0.4;
+        const upDownArrowLength = arrowLength * 0.6;
 
         this.ctx.beginPath();
         this.ctx.strokeStyle = '#000000';
@@ -180,9 +200,6 @@ export class Renderer2D implements IMachineRenderer {
 
         let endX = center.x;
         let endY = center.y;
-
-        // 上下方向の矢印は少し短くして区別をつける
-        const upDownArrowLength = arrowLength * 0.6;
 
         switch (direction) {
             case Direction.North:
