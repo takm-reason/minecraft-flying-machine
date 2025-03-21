@@ -46,6 +46,21 @@ export function FlyingMachineSimulator() {
         }
     }, [state]);
 
+    const getNextDirection = (currentDirection: Direction): Direction => {
+        switch (currentDirection) {
+            case Direction.North:
+                return Direction.East;
+            case Direction.East:
+                return Direction.South;
+            case Direction.South:
+                return Direction.West;
+            case Direction.West:
+                return Direction.North;
+            default:
+                return Direction.North;
+        }
+    };
+
     const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
         if (!containerRef.current || !state.selectedBlock) return;
 
@@ -59,27 +74,53 @@ export function FlyingMachineSimulator() {
                 block => block.position.x === x && block.position.y === y && block.position.z === 0
             );
 
-            const newBlock = {
+            // 新しいブロックのベース情報
+            const baseBlock = {
                 position: { x, y, z: 0 },
                 type: state.selectedBlock!,
-                direction: Direction.North,
                 state: BlockState.Inactive
             };
 
-            // 既存のブロックがある場合は置き換え、ない場合は追加
+            // 既存のブロックがある場合
             if (existingBlockIndex !== -1) {
+                const existingBlock = prev.blocks[existingBlockIndex];
+
+                // 同じタイプのブロックの場合は向きを変更
+                if (existingBlock.type === state.selectedBlock) {
+                    const newBlocks = [...prev.blocks];
+                    newBlocks[existingBlockIndex] = {
+                        ...baseBlock,
+                        direction: getNextDirection(existingBlock.direction)
+                    };
+                    return {
+                        ...prev,
+                        blocks: newBlocks
+                    };
+                }
+
+                // 異なるタイプの場合は新しいブロックで置き換え
                 const newBlocks = [...prev.blocks];
-                newBlocks[existingBlockIndex] = newBlock;
+                newBlocks[existingBlockIndex] = {
+                    ...baseBlock,
+                    direction: Direction.North
+                };
                 return {
                     ...prev,
                     blocks: newBlocks
                 };
-            } else {
-                return {
-                    ...prev,
-                    blocks: [...prev.blocks, newBlock]
-                };
             }
+
+            // 新規配置の場合
+            return {
+                ...prev,
+                blocks: [
+                    ...prev.blocks,
+                    {
+                        ...baseBlock,
+                        direction: Direction.North
+                    }
+                ]
+            };
         });
     };
 
