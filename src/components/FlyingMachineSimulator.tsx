@@ -53,18 +53,34 @@ export function FlyingMachineSimulator() {
         const x = Math.floor((e.clientX - rect.left) / 40);
         const y = Math.floor((e.clientY - rect.top) / 40);
 
-        setState(prev => ({
-            ...prev,
-            blocks: [
-                ...prev.blocks,
-                {
-                    position: { x, y, z: 0 },
-                    type: state.selectedBlock!,
-                    direction: Direction.North,
-                    state: BlockState.Inactive
-                }
-            ]
-        }));
+        setState(prev => {
+            // 同じ座標に既存のブロックがあるか確認
+            const existingBlockIndex = prev.blocks.findIndex(
+                block => block.position.x === x && block.position.y === y && block.position.z === 0
+            );
+
+            const newBlock = {
+                position: { x, y, z: 0 },
+                type: state.selectedBlock!,
+                direction: Direction.North,
+                state: BlockState.Inactive
+            };
+
+            // 既存のブロックがある場合は置き換え、ない場合は追加
+            if (existingBlockIndex !== -1) {
+                const newBlocks = [...prev.blocks];
+                newBlocks[existingBlockIndex] = newBlock;
+                return {
+                    ...prev,
+                    blocks: newBlocks
+                };
+            } else {
+                return {
+                    ...prev,
+                    blocks: [...prev.blocks, newBlock]
+                };
+            }
+        });
     };
 
     const handleBlockSelect = (blockType: BlockType) => {
