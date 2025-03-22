@@ -18,10 +18,16 @@ export class Renderer2D implements IMachineRenderer {
         }
     };
 
+    // オブザーバーの向きに応じたテクスチャを管理
+    private observerTextures = {
+        front: '/textures/observer_front.png',
+        back: '/textures/observer_back_lit.png',
+        side: '/textures/observer_top.png'
+    };
+
     // 基本テクスチャ
     private textureUrls = {
         [BlockType.Redstone]: '/textures/redstone_block.png',
-        [BlockType.Observer]: '/textures/observer_top.png',
         [BlockType.SlimeBlock]: '/textures/slime.png',
         [BlockType.HoneycombBlock]: '/textures/honeycomb.png',
         [BlockType.Dispenser]: '/textures/dispenser_front_horizontal.png',
@@ -56,6 +62,11 @@ export class Renderer2D implements IMachineRenderer {
         Object.entries(this.pistonTextures.top).forEach(([type, url]) => {
             promises.push(this.loadTexture(`${type}_top`, url));
         });
+
+        // オブザーバーのテクスチャをロード
+        promises.push(this.loadTexture('observer_front', this.observerTextures.front));
+        promises.push(this.loadTexture('observer_back_lit', this.observerTextures.back));
+        promises.push(this.loadTexture('observer_side', this.observerTextures.side));
 
         try {
             await Promise.all(promises);
@@ -129,11 +140,20 @@ export class Renderer2D implements IMachineRenderer {
             } else {
                 textureKey = `${type}_side` as string;
             }
+        } else if (type === BlockType.Observer) {
+            // オブザーバーの向きに応じたテクスチャを選択
+            if (direction === Direction.Up) {
+                textureKey = 'observer_back_lit';
+            } else if (direction === Direction.Down) {
+                textureKey = 'observer_front';
+            } else {
+                textureKey = 'observer_side';
+            }
         }
 
         const texture = this.textures.get(textureKey.toString());
         if (texture) {
-            // 方向に応じて回転を適用
+            // 方向に応じた回転を適用
             this.ctx.save();
             this.ctx.translate(x + this.gridSize / 2, y + this.gridSize / 2);
 
