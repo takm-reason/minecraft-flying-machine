@@ -15,6 +15,10 @@ export class Renderer2D implements IMachineRenderer {
         top: {
             [BlockType.StickyPiston]: '/textures/piston_top_sticky.png',
             [BlockType.Piston]: '/textures/piston_top_normal.png',
+        },
+        bottom: {
+            [BlockType.StickyPiston]: '/textures/piston_bottom_sticky.png',
+            [BlockType.Piston]: '/textures/piston_bottom.png',
         }
     };
 
@@ -61,6 +65,11 @@ export class Renderer2D implements IMachineRenderer {
         // ピストンの前面テクスチャをロード
         Object.entries(this.pistonTextures.top).forEach(([type, url]) => {
             promises.push(this.loadTexture(`${type}_top`, url));
+        });
+
+        // ピストンの底面テクスチャをロード
+        Object.entries(this.pistonTextures.bottom).forEach(([type, url]) => {
+            promises.push(this.loadTexture(`${type}_bottom`, url));
         });
 
         // オブザーバーのテクスチャをロード
@@ -134,9 +143,11 @@ export class Renderer2D implements IMachineRenderer {
         // テクスチャの選択
         let textureKey: string = type;
         if (type === BlockType.StickyPiston || type === BlockType.Piston) {
-            // Upの場合は前面（上面）のテクスチャを使用
+            // 向きに応じてテクスチャを選択
             if (direction === Direction.Up) {
                 textureKey = `${type}_top` as string;
+            } else if (direction === Direction.Down) {
+                textureKey = `${type}_bottom` as string;
             } else {
                 textureKey = `${type}_side` as string;
             }
