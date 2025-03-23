@@ -29,12 +29,17 @@ export class Renderer2D implements IMachineRenderer {
         side: '/textures/observer_top.png'
     };
 
+    // ディスペンサーのテクスチャを管理
+    private dispenserTextures = {
+        horizontal: '/textures/dispenser_front_horizontal.png',
+        vertical: '/textures/dispenser_front_vertical.png'
+    };
+
     // 基本テクスチャ
     private textureUrls = {
         [BlockType.Redstone]: '/textures/redstone_block.png',
         [BlockType.SlimeBlock]: '/textures/slime.png',
-        [BlockType.HoneycombBlock]: '/textures/honeycomb.png',
-        [BlockType.Dispenser]: '/textures/dispenser_front_horizontal.png',
+        [BlockType.HoneycombBlock]: '/textures/honeycomb.png'
     };
 
     private async loadTexture(key: string, url: string): Promise<void> {
@@ -71,6 +76,10 @@ export class Renderer2D implements IMachineRenderer {
         Object.entries(this.pistonTextures.bottom).forEach(([type, url]) => {
             promises.push(this.loadTexture(`${type}_bottom`, url));
         });
+
+        // ディスペンサーのテクスチャをロード
+        promises.push(this.loadTexture('dispenser_horizontal', this.dispenserTextures.horizontal));
+        promises.push(this.loadTexture('dispenser_vertical', this.dispenserTextures.vertical));
 
         // オブザーバーのテクスチャをロード
         promises.push(this.loadTexture('observer_front', this.observerTextures.front));
@@ -142,7 +151,9 @@ export class Renderer2D implements IMachineRenderer {
 
         // テクスチャの選択
         let textureKey: string = type;
-        if (type === BlockType.StickyPiston || type === BlockType.Piston) {
+        if (type === BlockType.Dispenser) {
+            textureKey = direction === Direction.Up ? 'dispenser_vertical' : 'dispenser_horizontal';
+        } else if (type === BlockType.StickyPiston || type === BlockType.Piston) {
             // 向きに応じてテクスチャを選択
             if (direction === Direction.Up) {
                 textureKey = `${type}_top` as string;
