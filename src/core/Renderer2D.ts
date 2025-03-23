@@ -9,7 +9,7 @@ export class Renderer2D implements IMachineRenderer {
     // ピストンの向きに応じたテクスチャを管理
     private pistonTextures = {
         side: {
-            [BlockType.StickyPiston]: '/textures/piston_side.png',
+            [BlockType.StickyPiston]: '/textures/piston_side_sticky.png',
             [BlockType.Piston]: '/textures/piston_side.png',
         },
         top: {
