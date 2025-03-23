@@ -157,24 +157,23 @@ export class Renderer2D implements IMachineRenderer {
             this.ctx.save();
             this.ctx.translate(x + this.gridSize / 2, y + this.gridSize / 2);
 
-            // 方向に応じた回転を適用
-            switch (direction) {
-                case Direction.North:
-                    break; // デフォルトの向き
-                case Direction.South:
-                    this.ctx.rotate(Math.PI);
-                    break;
-                case Direction.East:
-                    this.ctx.rotate(Math.PI / 2);
-                    break;
-                case Direction.West:
-                    this.ctx.rotate(-Math.PI / 2);
-                    break;
-                case Direction.Up:
-                    break; // 上向きはそのまま
-                case Direction.Down:
-                    this.ctx.rotate(Math.PI);
-                    break;
+            // 方向に応じた回転を適用（奥向きの場合は回転しない）
+            if (direction !== Direction.Down) {
+                switch (direction) {
+                    case Direction.North:
+                        break; // デフォルトの向き
+                    case Direction.South:
+                        this.ctx.rotate(Math.PI);
+                        break;
+                    case Direction.East:
+                        this.ctx.rotate(Math.PI / 2);
+                        break;
+                    case Direction.West:
+                        this.ctx.rotate(-Math.PI / 2);
+                        break;
+                    case Direction.Up:
+                        break; // 上向きはそのまま
+                }
             }
 
             // テクスチャを描画
